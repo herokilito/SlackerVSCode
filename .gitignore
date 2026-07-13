@@ -1,0 +1,5 @@
+node_modules/
+.userdata/
+.electron-cache/
+.tmp/
+*.log
