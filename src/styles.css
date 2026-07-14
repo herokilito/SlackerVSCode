@@ -155,8 +155,16 @@ body { display: flex; flex-direction: column; height: 100vh; }
 
 /* Indentation spacer for chapters inside subdirectories */
 .tree-item .ti-spacer { width: 16px; flex: 0 0 16px; }
-/* Chapter rows inside a subdirectory: extra left indent to align after chevron */
-.tree-children .tree-item.chapter-row { padding-left: 8px; }
+
+/* Visual hierarchy: book > subdirectory > chapter file */
+.tree-item.book-row { font-weight: 500; }
+
+/* Subdirectory rows live inside the book's tree-children */
+.tree-children > .tree-item.dir-row { padding-left: 16px; }
+/* Chapter rows inside a subdirectory: indent further to sit under the dir */
+.tree-children .tree-children > .tree-item.chapter-row { padding-left: 32px; }
+/* Flat chapter rows (no subdirectory): single indent level */
+.tree-children > .tree-item.chapter-row { padding-left: 16px; }
 
 .tree-children { overflow: hidden; }
 .tree-children.collapsed { display: none; }

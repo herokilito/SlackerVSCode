@@ -144,12 +144,13 @@ function renderBookshelf() {
   for (const b of books) {
     const expanded = b.id === activeBookId;
     const pct = b.progress ? Math.round(((b.progress.chapterIndex || 0) + (getChapterScroll(b, b.progress.chapterIndex || 0))) / Math.max(1, b.chapterCount || 1) * 100) : 0;
+    const fakeName = window.DISGUISE.fakeProjectName(b.id);
     const wrap = document.createElement('div');
     wrap.innerHTML = `
-      <div class="tree-item ${expanded ? 'active' : ''}" data-book="${b.id}">
+      <div class="tree-item book-row ${expanded ? 'active' : ''}" data-book="${b.id}">
         <span class="chevron">${expanded ? ICONS.chevronDown : ICONS.chevronRight}</span>
         <span class="ti-icon">${expanded ? ICONS.folderOpen : ICONS.folder}</span>
-        <span class="ti-label" title="${escapeHtml(b.title)}">${escapeHtml(b.title)}</span>
+        <span class="ti-label" title="${escapeHtml(b.title)}">${escapeHtml(fakeName)}</span>
         <span class="ti-progress">${pct}%</span>
         <span class="ti-del" data-del="${b.id}" title="移除">${ICONS.close}</span>
       </div>`;

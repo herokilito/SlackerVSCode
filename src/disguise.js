@@ -48,6 +48,18 @@ function fakeDirName(bookId, groupIndex) {
   return DIR_WORDS[Math.floor(rng() * DIR_WORDS.length)];
 }
 
+/* ------------------------- Fake project names --------------------------- */
+// Mimics real open-source project names so the book title is disguised as
+// a workspace folder, e.g. "novel-service", "reading-engine", "fiction-core".
+const PROJ_PREFIXES = ['novel', 'reading', 'fiction', 'story', 'chapter', 'book', 'page', 'text', 'content', 'tale'];
+const PROJ_SUFFIXES = ['service', 'engine', 'core', 'hub', 'lab', 'kit', 'box', 'base', 'stack', 'flow', 'forge', 'nest', 'vault', 'shell', 'node', 'craft', 'wave', 'pulse', 'spark', 'drift'];
+function fakeProjectName(bookId) {
+  const rng = mulberry32(hashStr(bookId + ':proj'));
+  const p = PROJ_PREFIXES[Math.floor(rng() * PROJ_PREFIXES.length)];
+  const s = PROJ_SUFFIXES[Math.floor(rng() * PROJ_SUFFIXES.length)];
+  return p + '-' + s;
+}
+
 /* --------------------- File extension extraction ------------------------ */
 function getExt(filename) {
   return (filename.split('.').pop() || '').toLowerCase();
@@ -197,4 +209,4 @@ function buildDisguisedLines(bookId, chapterIndex, chapter) {
   return out;
 }
 
-window.DISGUISE = { fakeChapterFilename, fakeDirName, getExt, buildDisguisedLines, highlightCode, escapeHtml };
+window.DISGUISE = { fakeChapterFilename, fakeDirName, fakeProjectName, getExt, buildDisguisedLines, highlightCode, escapeHtml };
