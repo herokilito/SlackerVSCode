@@ -231,6 +231,9 @@ body { display: flex; flex-direction: column; height: 100vh; }
   color: var(--vs-text-dim); font-size: 12px; user-select: none; font-family: "Consolas","Courier New",monospace;
 }
 .novel-line .tx {
+  /* 正文可选中复制，但不可编辑（非 contenteditable 元素天然只读） */
+  user-select: text;
+  -webkit-user-select: text;
   color: var(--vs-text); font-family: "Consolas","Microsoft YaHei","Courier New",monospace;
   white-space: pre-wrap; word-break: break-word; flex: 1;
 }
