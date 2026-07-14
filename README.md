@@ -97,7 +97,7 @@ SlackerVSCode/
 
 打开一章小说后，编辑器看起来是这样的：
 
-![1783930903115](image/README/1783930903115.png)
+![rendering](image/README/rendering.png)
 
 ## 许可证
 
