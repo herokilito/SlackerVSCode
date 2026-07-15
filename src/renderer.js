@@ -436,6 +436,177 @@ const onScrollProgress = debounce(() => {
 
 SCROLL.addEventListener('scroll', onScrollProgress, { passive: true });
 
+/* ----------------------------- Search panel ---------------------------- */
+let searchTimer = null;
+let currentSearchToken = 0;
+
+function showSidebarPanel(name) {
+  $('#explorerPanel').classList.toggle('hidden', name !== 'explorer');
+  $('#searchPanel').classList.toggle('hidden', name !== 'search');
+}
+
+function initSearchPanel() {
+  $('#searchIcon').innerHTML = ICONS.search;
+  const input = $('#searchInput');
+  input.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(runSearch, 200);
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { input.value = ''; runSearch(); input.blur(); }
+    else if (e.key === 'Enter') {
+      // Jump to first result
+      const first = $('#searchResults .sr-item');
+      if (first) first.click();
+    }
+  });
+}
+
+function openSearchPanel() {
+  // Activate the search icon in the activity bar.
+  $$('.ab-icon', $('#abTop')).forEach(x => x.classList.remove('active'));
+  const icons = $$('.ab-icon', $('#abTop'));
+  if (icons[1]) icons[1].classList.add('active');
+  showSidebarPanel('search');
+  if (!store.settings.sidebarVisible) toggleSidebar();
+  setTimeout(() => $('#searchInput').focus(), 50);
+}
+
+const runSearch = debounce(async () => {
+  const q = $('#searchInput').value.trim();
+  const out = $('#searchResults');
+  const countEl = $('#searchCount');
+  const detailEl = $('#searchDetail');
+  const myToken = ++currentSearchToken;
+
+  if (!q) {
+    out.innerHTML = '';
+    countEl.textContent = '';
+    detailEl.textContent = '搜索当前打开的小说';
+    return;
+  }
+
+  // Search only the currently active book.
+  const book = store.books.find(b => b.id === activeBookId) || (tabs[activeTabIndex] && store.books.find(b => b.id === tabs[activeTabIndex].bookId));
+  if (!book) {
+    out.innerHTML = '<div class="sr-empty">请先打开一本小说</div>';
+    countEl.textContent = '';
+    detailEl.textContent = '无打开的小说';
+    return;
+  }
+  const data = await ensureBookLoaded(book);
+  if (!data || myToken !== currentSearchToken) return;
+
+  const ql = q.toLowerCase();
+  const groups = []; // { chapterIndex, matches: [{para, idx}] }
+  let totalMatches = 0;
+
+  for (let i = 0; i < data.chapters.length; i++) {
+    const ch = data.chapters[i];
+    const paras = ch.content.split('\n').map(l => l.trim()).filter(Boolean);
+    const matches = [];
+    for (let p = 0; p < paras.length; p++) {
+      const lower = paras[p].toLowerCase();
+      let pos = lower.indexOf(ql);
+      while (pos >= 0) {
+        matches.push({ para: paras[p], idx: pos });
+        pos = lower.indexOf(ql, pos + ql.length);
+      }
+    }
+    if (matches.length) {
+      groups.push({ chapterIndex: i, matches });
+      totalMatches += matches.length;
+    }
+    // Stop early if too many matches (perf safeguard)
+    if (totalMatches > 2000) break;
+  }
+
+  countEl.textContent = totalMatches > 0 ? String(totalMatches) : '';
+  detailEl.textContent = totalMatches > 0
+    ? `${totalMatches} 个结果 · ${groups.length} 章`
+    : '无结果';
+
+  if (groups.length === 0) {
+    out.innerHTML = '<div class="sr-empty">无匹配结果</div>';
+    return;
+  }
+
+  const D = window.DISGUISE;
+  let html = '';
+  for (const g of groups) {
+    const fakeName = D.fakeChapterFilename(g.chapterIndex, book.id);
+    const realTitle = data.chapters[g.chapterIndex].title;
+    const icon = ICONS.fileTypeIcon(fakeName);
+    // Show up to 3 matched lines per chapter
+    const shown = g.matches.slice(0, 3);
+    const extra = g.matches.length - shown.length;
+    html += `<div class="sr-group" data-chapter="${g.chapterIndex}">`;
+    html += `<div class="sr-file" data-jump="${g.chapterIndex}" title="${escapeHtml(realTitle)}">`;
+    html += `<span class="sr-file-icon">${icon}</span>`;
+    html += `<span class="sr-file-name">${escapeHtml(fakeName)}</span>`;
+    html += `<span class="sr-file-count">${g.matches.length}</span></div>`;
+    for (const m of shown) {
+      const preview = makePreview(m.para, m.idx, q.length);
+      html += `<div class="sr-item" data-jump="${g.chapterIndex}" data-para="${pIdx(g, m)}">${preview}</div>`;
+    }
+    if (extra > 0) {
+      html += `<div class="sr-item" data-jump="${g.chapterIndex}" style="color:#666">…还有 ${extra} 处匹配</div>`;
+    }
+    html += '</div>';
+  }
+  out.innerHTML = html;
+
+  // Bind clicks — jump to chapter, then scroll to first match if para known.
+  $$('.sr-file, .sr-item', out).forEach(el => {
+    el.addEventListener('click', (e) => {
+      const ch = parseInt(el.dataset.jump, 10);
+      if (isNaN(ch)) return;
+      openChapter(book.id, ch);
+      // If a specific paragraph match, try to scroll to it after render.
+      const paraIdx = el.dataset.para;
+      if (paraIdx !== undefined) {
+        setTimeout(() => scrollToMatch(q), 80);
+      }
+    });
+  });
+}, 200);
+
+// Build a preview snippet with the match highlighted.
+function makePreview(text, idx, qlen) {
+  const start = Math.max(0, idx - 12);
+  const end = Math.min(text.length, idx + qlen + 20);
+  let prefix = start > 0 ? '…' : '';
+  let suffix = end < text.length ? '…' : '';
+  const before = escapeHtml(text.slice(start, idx));
+  const match = escapeHtml(text.slice(idx, idx + qlen));
+  const after = escapeHtml(text.slice(idx + qlen, end));
+  return prefix + before + '<mark>' + match + '</mark>' + after + suffix;
+}
+
+// Paragraph index inside the chapter — we just store a counter per group.
+function pIdx(group, match) {
+  if (!group._counter) group._counter = 0;
+  return group._counter++;
+}
+
+// After jumping to a chapter, scroll to the first occurrence of the query.
+function scrollToMatch(q) {
+  const ql = q.toLowerCase();
+  const lines = $$('.novel-line .tx', EDITOR);
+  for (const ln of lines) {
+    if (ln.textContent.toLowerCase().includes(ql)) {
+      const rect = ln.getBoundingClientRect();
+      const containerRect = SCROLL.getBoundingClientRect();
+      SCROLL.scrollTop += rect.top - containerRect.top - 80;
+      // Brief highlight flash
+      ln.style.transition = 'background .3s';
+      ln.style.background = 'rgba(255, 215, 0, .18)';
+      setTimeout(() => { ln.style.background = ''; }, 1200);
+      break;
+    }
+  }
+}
+
 /* -------------------------- Quick open (Ctrl+P) ------------------------ */
 function openQuickOpen() {
   const book = store.books.find(b => b.id === activeBookId) || store.books[0];
@@ -579,7 +750,7 @@ function handleMenuAct(act) {
   switch (act) {
     case 'open': pickAndAddBooks(); break;
     case 'exit': window.close(); break;
-    case 'find': toast('摸鱼模式下不支持搜索正文 :)'); break;
+    case 'find': openSearchPanel(); break;
     case 'palette': openQuickOpen(); break;
     case 'toggleSidebar': toggleSidebar(); break;
     case 'toggleReading': store.settings.readingMode = !store.settings.readingMode; EDITOR.classList.toggle('reading-mode', store.settings.readingMode); persistDebounced(); toast(store.settings.readingMode ? '阅读模式' : '代码模式'); break;
@@ -627,10 +798,17 @@ function buildActivityBar() {
     el.innerHTML = ICONS[it.icon];
     el.title = it.tip;
     el.addEventListener('click', () => {
-      if (it.key !== 'explorer') toast('摸鱼模式下该面板已禁用 :)');
+      if (it.key !== 'explorer' && it.key !== 'search') { toast('摸鱼模式下该面板已禁用 :)'); return; }
       $$('.ab-icon', top).forEach(x => x.classList.remove('active'));
       el.classList.add('active');
-      if (it.key === 'explorer' && !store.settings.sidebarVisible) toggleSidebar();
+      if (it.key === 'explorer') {
+        showSidebarPanel('explorer');
+        if (!store.settings.sidebarVisible) toggleSidebar();
+      } else if (it.key === 'search') {
+        showSidebarPanel('search');
+        if (!store.settings.sidebarVisible) toggleSidebar();
+        setTimeout(() => $('#searchInput').focus(), 50);
+      }
     });
     top.appendChild(el);
   });
@@ -709,6 +887,7 @@ function initKeys() {
     if (ctrl && e.key.toLowerCase() === 'o') { e.preventDefault(); pickAndAddBooks(); }
     else if (ctrl && e.key.toLowerCase() === 'p') { e.preventDefault(); openQuickOpen(); }
     else if (ctrl && e.shiftKey && e.key.toLowerCase() === 'p') { e.preventDefault(); openQuickOpen(); }
+    else if (ctrl && e.key.toLowerCase() === 'f') { e.preventDefault(); openSearchPanel(); }
     else if (ctrl && e.key.toLowerCase() === 'b') { e.preventDefault(); toggleSidebar(); }
     else if (ctrl && (e.key === '=' || e.key === '+')) { e.preventDefault(); zoom(1); }
     else if (ctrl && e.key === '-') { e.preventDefault(); zoom(-1); }
@@ -747,6 +926,7 @@ async function init() {
   initSash();
   initKeys();
   initWindowControls();
+  initSearchPanel();
   $('#sbTitle').textContent = 'EXPLORER';
   $('#statusLeft').innerHTML = `<span class="sb-item">${ICONS.check}<span>主分支 master</span></span>`;
   $('#statusRight').innerHTML = `<span class="sb-item">Ln 1, Col 1</span><span class="sb-item">UTF-8</span>`;

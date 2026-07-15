@@ -33,12 +33,34 @@
 
     <!-- Side Bar -->
     <div id="sidebar">
-      <div class="sb-header">
-        <span id="sbTitle">EXPLORER</span>
-        <span class="sb-actions" id="sbActions"></span>
+      <!-- Explorer panel -->
+      <div id="explorerPanel" class="sb-panel">
+        <div class="sb-header">
+          <span id="sbTitle">EXPLORER</span>
+          <span class="sb-actions" id="sbActions"></span>
+        </div>
+        <div class="sb-section-label">WORKSPACE</div>
+        <div id="bookshelf" class="bookshelf"></div>
       </div>
-      <div class="sb-section-label">WORKSPACE</div>
-      <div id="bookshelf" class="bookshelf"></div>
+      <!-- Search panel (hidden by default) -->
+      <div id="searchPanel" class="sb-panel hidden">
+        <div class="sb-header">
+          <span>SEARCH</span>
+        </div>
+        <div class="search-body">
+          <div class="search-input-wrap">
+            <div class="search-input-row">
+              <span class="search-icon" id="searchIcon"></span>
+              <input id="searchInput" class="search-input" placeholder="搜索当前小说" autocomplete="off" />
+              <span class="search-count" id="searchCount"></span>
+            </div>
+            <div class="search-sub">
+              <span class="search-detail" id="searchDetail">搜索当前打开的小说</span>
+            </div>
+          </div>
+          <div id="searchResults" class="search-results"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Sash / resizer -->
