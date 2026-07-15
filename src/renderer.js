@@ -928,6 +928,94 @@ function initWindowControls() {
   $('#wcClose').addEventListener('click', () => window.api.window.close());
 }
 
+/* ------------------------- Editor context menu ------------------------- */
+// Right-click on selected novel text -> "在 Web 中搜索" opens Bing in the
+// system default browser with the selected text as the query.
+let lastSelectedText = ''; // cached at contextmenu time, used on menu click
+
+function getSelectionText() {
+  const sel = window.getSelection();
+  return sel ? sel.toString().trim() : '';
+}
+
+function hideContextMenu() {
+  $('#contextMenu').classList.add('hidden');
+}
+
+function showContextMenu(x, y, text) {
+  const menu = $('#contextMenu');
+  const queryEl = $('#cmQuery');
+  const searchRow = menu.querySelector('[data-act="searchWeb"]');
+  const copyRow = menu.querySelector('[data-act="copy"]');
+
+  // Truncate the displayed query for layout sanity.
+  const display = text.length > 28 ? text.slice(0, 28) + '…' : text;
+  queryEl.textContent = display;
+  searchRow.classList.add('search-row');
+  searchRow.classList.remove('disabled');
+  copyRow.classList.remove('disabled');
+
+  // Position the menu; flip to left/top if it would overflow the viewport.
+  menu.classList.remove('hidden');
+  const rect = menu.getBoundingClientRect();
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let left = x, top = y;
+  if (left + rect.width > vw - 4) left = Math.max(4, vw - rect.width - 4);
+  if (top + rect.height > vh - 4) top = Math.max(4, vh - rect.height - 4);
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+}
+
+function initContextMenu() {
+  const menu = $('#contextMenu');
+
+  // Right-click inside the editor (only on novel text lines).
+  EDITOR.addEventListener('contextmenu', (e) => {
+    const text = getSelectionText();
+    if (!text) return; // no selection -> let the default browser menu show
+    e.preventDefault();
+    lastSelectedText = text;
+    showContextMenu(e.clientX, e.clientY, text);
+  });
+
+  // Menu item clicks.
+  menu.addEventListener('click', (e) => {
+    const row = e.target.closest('.menu-row');
+    if (!row) return;
+    const act = row.dataset.act;
+    // Prefer live selection; fall back to the cached text from contextmenu.
+    const text = getSelectionText() || lastSelectedText;
+    hideContextMenu();
+    if (act === 'copy') {
+      if (text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).catch(() => {});
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = text; document.body.appendChild(ta);
+          ta.select(); try { document.execCommand('copy'); } catch (_) {}
+          ta.remove();
+        }
+        toast('已复制');
+      }
+    } else if (act === 'searchWeb') {
+      if (!text) return;
+      const url = 'https://www.bing.com/search?q=' + encodeURIComponent(text);
+      window.api.shell.openExternal(url).then((ok) => {
+        if (!ok) toast('打开浏览器失败');
+      });
+    }
+  });
+
+  // Click anywhere outside the menu closes it.
+  document.addEventListener('click', (e) => {
+    if (!menu.classList.contains('hidden') && !e.target.closest('#contextMenu')) {
+      hideContextMenu();
+    }
+  });
+  document.addEventListener('scroll', hideContextMenu, true);
+}
+
 /* ------------------------------ Initialize ----------------------------- */
 async function init() {
   setLogo();
@@ -938,6 +1026,7 @@ async function init() {
   initKeys();
   initWindowControls();
   initSearchPanel();
+  initContextMenu();
   $('#sbTitle').textContent = 'EXPLORER';
   $('#statusLeft').innerHTML = `<span class="sb-item">${ICONS.check}<span>主分支 master</span></span>`;
   $('#statusRight').innerHTML = `<span class="sb-item">Ln 1, Col 1</span><span class="sb-item">UTF-8</span>`;

@@ -368,6 +368,17 @@ body { display: flex; flex-direction: column; height: 100vh; }
 .menu-sep { height: 1px; background: #454545; margin: 4px 0; }
 .menu-row.checked::before { content: '✓'; position: absolute; left: 10px; }
 
+/* ----------------------- Editor context menu ------------------------- */
+.context-menu {
+  position: fixed; z-index: 300; min-width: 260px; max-width: 420px;
+  background: #252526; border: 1px solid #454545; border-radius: 3px;
+  padding: 4px 0; box-shadow: 0 6px 16px rgba(0,0,0,.5);
+}
+.context-menu .menu-row { padding: 4px 20px 4px 24px; }
+.context-menu .menu-row.disabled { color: #6b6b6b; pointer-events: none; }
+.context-menu #cmQuery { color: var(--vs-link); font-weight: 500; }
+.context-menu .menu-row.search-row { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ------------------------------- Toast ------------------------------- */
 .toast {
   position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);

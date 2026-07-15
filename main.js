@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const iconv = require('iconv-lite');
@@ -67,6 +67,15 @@ ipcMain.handle('window:maximize', () => {
 });
 ipcMain.handle('window:close', () => { if (mainWindow) mainWindow.close(); });
 ipcMain.handle('window:isMaximized', () => !!(mainWindow && mainWindow.isMaximized()));
+
+/* --------------------------- IPC: open in browser ------------------------- */
+// Open an external URL in the system default browser.
+// Used by the editor's right-click "search on web" menu.
+ipcMain.handle('shell:openExternal', (_evt, url) => {
+  if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return false;
+  shell.openExternal(url);
+  return true;
+});
 
 /* ----------------------------- Storage helpers ---------------------------- */
 

@@ -105,6 +105,13 @@
   <!-- Menu dropdown layer -->
   <div id="menuLayer" class="menu-layer hidden"></div>
 
+  <!-- Editor context menu (right-click on selected text) -->
+  <div id="contextMenu" class="context-menu hidden">
+    <div class="menu-row" data-act="copy">复制</div>
+    <div class="menu-sep"></div>
+    <div class="menu-row" data-act="searchWeb">在 Web 中搜索 “<span id="cmQuery"></span>”</div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 
