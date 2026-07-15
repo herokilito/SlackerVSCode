@@ -185,8 +185,11 @@ async function renderChapterList(bookId, container) {
     const end = Math.min(start + CHAPTERS_PER_DIR, total);
     const dirName = D.fakeDirName(bookId, g);
     const dirKey = bookId + ':' + g;
-    // Auto-expand the group containing the active chapter.
-    const containsActive = activeBookId === bookId && activeChapterIndex >= start && activeChapterIndex < end;
+    // Auto-expand the group containing the active chapter (based on the
+    // actually-opened tab, not the global activeBookId which also tracks
+    // which book's tree is merely expanded).
+    const at = activeTabChapter();
+    const containsActive = !!at && at.bookId === bookId && at.chapterIndex >= start && at.chapterIndex < end;
     const expanded = expandedDirs.has(dirKey) || containsActive;
     if (containsActive) expandedDirs.add(dirKey);
 
@@ -212,10 +215,18 @@ async function renderChapterList(bookId, container) {
   }
 }
 
+// 当前编辑器中实际打开的章节（基于 tab），用于判断章节高亮，
+// 避免点击书名展开目录树时误用全局 activeChapterIndex 导致跨书误高亮。
+function activeTabChapter() {
+  const t = tabs[activeTabIndex];
+  return t ? t : null;
+}
+
 function buildChapterRow(bookId, ch, i, cur) {
   const D = window.DISGUISE;
   const read = i < cur;
-  const isActive = bookId === activeBookId && i === activeChapterIndex;
+  const at = activeTabChapter();
+  const isActive = !!at && at.bookId === bookId && at.chapterIndex === i;
   const fakeName = D.fakeChapterFilename(i, bookId);
   const icon = ICONS.fileTypeIcon(fakeName);
   const row = document.createElement('div');
