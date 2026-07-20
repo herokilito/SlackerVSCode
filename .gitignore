@@ -3,3 +3,7 @@ node_modules/
 .electron-cache/
 .tmp/
 *.log
+out/
+dist/
+.vite/
+

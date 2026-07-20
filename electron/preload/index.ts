@@ -1,16 +1,17 @@
-const { contextBridge, ipcRenderer } = require('electron');
+import { contextBridge, ipcRenderer } from 'electron'
 
 // Secure bridge between renderer and main process.
 contextBridge.exposeInMainWorld('api', {
   store: {
     load: () => ipcRenderer.invoke('store:load'),
-    save: (data) => ipcRenderer.invoke('store:save', data)
+    save: (data: unknown) => ipcRenderer.invoke('store:save', data),
+    saveSync: (data: unknown) => ipcRenderer.sendSync('store:save-sync', data)
   },
   dialog: {
     openBook: () => ipcRenderer.invoke('dialog:openBook')
   },
   book: {
-    read: (filePath) => ipcRenderer.invoke('book:read', filePath)
+    read: (filePath: string) => ipcRenderer.invoke('book:read', filePath)
   },
   window: {
     minimize: () => ipcRenderer.invoke('window:minimize'),
@@ -19,6 +20,8 @@ contextBridge.exposeInMainWorld('api', {
     isMaximized: () => ipcRenderer.invoke('window:isMaximized')
   },
   shell: {
-    openExternal: (url) => ipcRenderer.invoke('shell:openExternal', url)
+    openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url)
   }
-});
+})
+
+export type ElectronAPI = typeof window.api
