@@ -58,7 +58,7 @@ body { display: flex; flex-direction: column; height: 100vh; }
 }
 .tb-left { display: flex; align-items: center; gap: 8px; }
 .tb-logo { display: flex; align-items: center; }
-.tb-logo svg { width: 16px; height: 16px; }
+.tb-logo svg { width: 16px; height: 16px; color: #0098ff; }
 .tb-title { font-size: 12px; color: #cccccc; margin-right: 4px; }
 .menubar { display: flex; -webkit-app-region: no-drag; }
 .menubar .menu-item {
@@ -289,7 +289,7 @@ body { display: flex; flex-direction: column; height: 100vh; }
 /* Welcome screen */
 .welcome { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 60vh; }
 .welcome-inner { text-align: center; color: var(--vs-text); max-width: 560px; padding: 40px; }
-.welcome-logo svg { width: 80px; height: 80px; color: #0e7fd6; margin-bottom: 16px; }
+.welcome-logo svg { width: 80px; height: 80px; color: #0098ff; margin-bottom: 16px; }
 .welcome h1 { font-size: 28px; font-weight: 200; margin-bottom: 6px; color: #fff; }
 .welcome-sub { color: var(--vs-text-dim); margin-bottom: 28px; font-size: 14px; }
 .welcome-actions { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-bottom: 24px; }

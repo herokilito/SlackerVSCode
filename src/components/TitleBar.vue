@@ -11,10 +11,8 @@ const books = useBooksStore()
 const tabs = useTabsStore()
 const persist = usePersistStore()
 
-const logoSvg = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <path fill="#0e7fd6" d="M75 8 L92 16 L92 84 L75 92 L40 60 L18 78 L10 72 L30 50 L10 28 L18 22 L40 40 Z"/>
-  <path fill="#fff" d="M75 24 L52 44 L62 50 L75 60 Z" opacity=".9"/>
-</svg>`
+// Real VS Code logo (codicon "vscode" path)
+const logoSvg = ICONS.vscode
 
 interface MenuItem {
   label: string

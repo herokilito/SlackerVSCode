@@ -36,7 +36,7 @@ function createWindow(): void {
 
   mainWindow.once('ready-to-show', () => mainWindow?.show())
 
-  if (process.argv.includes('--dev')) {
+  if (process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.webContents.openDevTools({ mode: 'detach' })
   }
 

@@ -108,7 +108,7 @@ async function openWelcome(): Promise<void> {
     <div v-if="!activeTab" ref="editorEl" class="editor" :class="editorClass" :style="editorStyle">
       <div class="welcome">
         <div class="welcome-inner">
-          <div class="welcome-logo" v-html="ICONS.extensions"></div>
+          <div class="welcome-logo" v-html="ICONS.vscode"></div>
           <h1>Visual Studio Code</h1>
           <p class="welcome-sub">Editing evolved</p>
           <div class="welcome-actions">
