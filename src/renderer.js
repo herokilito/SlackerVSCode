@@ -294,13 +294,15 @@ function renderTabs() {
     const book = store.books.find(b => b.id === t.bookId);
     if (!book) return;
     const data = bookCache.get(t.bookId);
-    const realTitle = data && data.chapters[t.chapterIndex] ? data.chapters[t.chapterIndex].title : '...';
+    const realTitle = data && data.chapters[t.chapterIndex] ? data.chapters[t.chapterIndex].title : '';
     const fakeName = window.DISGUISE.fakeChapterFilename(t.chapterIndex, t.bookId);
     const tab = document.createElement('div');
     tab.className = 'tab' + (i === activeTabIndex ? ' active' : '');
+    // title 挂在整个 tab 上，悬浮在图标/标签/关闭按钮任意位置都能显示真实章节标题
+    tab.title = realTitle || fakeName;
     tab.innerHTML = `
       <span class="tab-icon">${ICONS.fileTypeIcon(fakeName)}</span>
-      <span class="tab-label" title="${escapeHtml(realTitle)}">${escapeHtml(fakeName)}</span>
+      <span class="tab-label">${escapeHtml(fakeName)}</span>
       <span class="tab-close">${ICONS.close}</span>`;
     tab.addEventListener('click', () => selectTab(i));
     tab.querySelector('.tab-close').addEventListener('click', (e) => { e.stopPropagation(); closeTab(i); });
@@ -336,6 +338,9 @@ async function renderEditor() {
   if (!data) return;
   const ch = data.chapters[t.chapterIndex];
   if (!ch) return;
+  // 数据异步加载完成后，刷新标签页 title（首次打开时 bookCache 为空，
+  // renderTabs 拿不到真实章节标题，这里补上）
+  renderTabs();
   const D = window.DISGUISE;
   const lines = D.buildDisguisedLines(book.id, t.chapterIndex, ch);
   let frag = '<div class="novel">';
@@ -373,8 +378,11 @@ function renderBreadcrumbs() {
   const data = bookCache.get(t.bookId);
   const realTitle = data && data.chapters[t.chapterIndex] ? data.chapters[t.chapterIndex].title : '';
   const fakeName = window.DISGUISE.fakeChapterFilename(t.chapterIndex, t.bookId);
+  // 小说名也要伪装为英文工程名（和侧边栏书架保持一致），悬浮显示真实书名
+  const fakeProj = window.DISGUISE.fakeProjectName(t.bookId);
+  const projTitle = book ? book.title : '';
   bc.innerHTML = `
-    <span class="crumb">${ICONS.folder}<span>${escapeHtml(book ? book.title : '')}</span></span>
+    <span class="crumb" title="${escapeHtml(projTitle)}">${ICONS.folder}<span>${escapeHtml(fakeProj)}</span></span>
     <span class="sep">›</span>
     <span class="crumb" title="${escapeHtml(realTitle)}">${ICONS.fileTypeIcon(fakeName)}<span>${escapeHtml(fakeName)}</span></span>`;
 }
